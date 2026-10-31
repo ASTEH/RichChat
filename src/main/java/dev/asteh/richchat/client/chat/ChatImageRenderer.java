@@ -11,7 +11,9 @@ import net.minecraft.client.gui.components.ChatComponent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Рисует эскизы поверх зарезервированной области строки RichChat. */
 public final class ChatImageRenderer {
@@ -34,7 +36,7 @@ public final class ChatImageRenderer {
         HITBOXES.clear();
 
         Minecraft minecraft = Minecraft.getInstance();
-        double scale = minecraft.options.chat().getScale();
+        double scale = minecraft.options.chatScale().get();
         if (scale <= 0.0D || lines.isEmpty()) {
             return;
         }

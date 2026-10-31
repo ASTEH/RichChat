@@ -134,6 +134,32 @@ public final class LocalImageLibrary {
         ));
     }
 
+    /** Возвращает безопасный путь к исходнику из пользовательской библиотеки. */
+    public static synchronized Path localPath(LocalImageEntry entry) {
+        UUID.fromString(entry.id());
+        return folderForCategory(entry.category()).resolve(entry.id() + "." + entry.extension()).normalize();
+    }
+
+    /** Ищет локально сохранённый файл, полученный от сервера. */
+    public static synchronized Path findCachedPath(String id) {
+        try {
+            UUID.fromString(id);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+
+        Path cacheRoot = root().resolve("cache").normalize();
+        for (String category : List.of("photos", "gifs", "stickers")) {
+            for (String extension : List.of("png", "jpg", "gif")) {
+                Path candidate = cacheRoot.resolve(category).resolve(id + "." + extension).normalize();
+                if (candidate.startsWith(cacheRoot) && Files.isRegularFile(candidate)) {
+                    return candidate;
+                }
+            }
+        }
+        return null;
+    }
+
     public static synchronized Path saveReceived(StoredImage image, byte[] bytes) throws IOException {
         ensureDirectories();
         String categoryFolder = switch (image.category()) {

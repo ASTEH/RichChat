@@ -6,5 +6,8 @@
   "richchat.tab.stickers": "Stickers",
   "richchat.action.add": "Add",
   "richchat.action.delete": "Delete",
-  "richchat.error.disabled": "Image sharing is disabled by the server."
+  "richchat.error.disabled": "Image sharing is disabled by the server.",
+  "richchat.picker.title": "Image Library",
+  "richchat.preview.title": "Image Preview",
+  "richchat.preview.unavailable": "Image unavailable"
 }

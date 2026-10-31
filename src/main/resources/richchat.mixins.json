@@ -4,7 +4,9 @@
   "package": "dev.asteh.richchat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
-  "client": [],
+  "client": [
+    "ChatComponentMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

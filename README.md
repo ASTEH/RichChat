@@ -11,18 +11,20 @@ A standalone Minecraft 1.21.1 / NeoForge 21.1.x mod for shared chat images, anim
 
 ## Current status
 
-The server upload, storage, client transfer, and history-sync pipelines compile in CI:
+Implemented in this development branch:
 
-- Server accepts upload metadata and bounded 24 KiB C2S chunks.
-- Server validates PNG/JPEG/GIF signatures and decodes images before saving.
-- Server stores accepted image bytes under the current world save folder and stores bounded history metadata using SavedData.
-- Server broadcasts new images to connected clients.
-- A joining player receives saved image history, constrained by the configurable total transfer budget (default 8 MiB per login).
-- Client assembles the incoming history sequentially and caches validated images.
-- Client library supports local import, delete, favorites, recent-use timestamps, and a JSON index.
-- Client exposes an asynchronous file upload method for the upcoming picker.
+- Server validates, stores, broadcasts, and retains bounded image history.
+- Client uploads local files, receives server chunks, and caches image files locally.
+- New players receive recent image history within a configurable transfer budget.
+- Chat messages containing server-issued image identifiers become tagged RichChat entries.
+- The chat screen has a RichChat picker button.
+- The picker has GIF / Photos / Stickers tabs, a scrollable 4×5 grid, native file import, automatic file-type detection, and right-click deletion.
+- Chat thumbnails draw inside the reserved chat entry; clicking opens a preview overlay.
+- The dynamic texture cache is bounded to 48 entries.
 
-**Not implemented yet:** inline chat rendering, picker GUI, preview overlay, and GIF frame playback. Image files are transferred and cached, but are not yet drawn in the visible chat.
+**Not implemented yet:** animated GIF frame playback. GIF files currently display their first frame. WebP is also not enabled by the standard ImageIO runtime.
+
+The chat input button is registered with NeoForge ScreenEvent.Init.Post rather than a ChatScreen mixin. The client-only ChatComponent mixin adds per-message image metadata without changing how normal chat input is sent.
 
 ## Build
 
@@ -39,8 +41,6 @@ gradle wrapper --gradle-version 9.2.1
 .\gradlew.bat build
 ```
 
-On Linux/macOS, use `./gradlew build` after generating the wrapper.
-
 ## Storage
 
 - User library: `.minecraft/richchat/images/{gifs,photos,stickers}/`
@@ -49,9 +49,19 @@ On Linux/macOS, use `./gradlew build` after generating the wrapper.
 - Server image files: `<world-save>/richchat/images/`
 - Server metadata history: `<world-save>/data/richchat_images.dat`
 
-## Configuration
+## Controls
 
-- Server policy: NeoForge SERVER config, `richchat-server.toml` (world/serverconfig).
-- Client UI: NeoForge CLIENT config, `richchat-client.toml`.
+1. Open the vanilla chat and click the small image button next to the input field.
+2. Select GIF, Photos, or Stickers.
+3. Click Add to import a local image.
+4. Left-click an item to upload it to the server.
+5. Right-click an item to delete it from the local library.
+6. Scroll over the grid to browse more items.
+7. Click an image in chat to open its preview.
 
-The server config is authoritative for upload limits, moderation, and join-history transfer budgets.
+## Limitations
+
+- Animated GIFs currently render their first frame only.
+- WebP requires an additional ImageIO provider.
+- The native file picker uses Java AWT and requires a desktop environment.
+- Thumbnail placement and hit-testing need manual checks at different GUI scales, chat opacity settings, and with many wrapped chat messages.

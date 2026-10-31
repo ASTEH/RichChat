@@ -20,7 +20,7 @@ sourceSets.main.resources {
     srcDir('src/generated/resources')
 }
 
-neoForge {
+repositories {\n    mavenCentral()\n}\n\ndependencies {\n    compileOnly 'org.spongepowered:mixin:0.8.5'\n}\n\nneoForge {
     version = project.neo_version
 
     parchment {

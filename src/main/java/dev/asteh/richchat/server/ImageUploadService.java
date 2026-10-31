@@ -231,6 +231,7 @@ public final class ImageUploadService {
             }
 
             sendImage(player.getServer(), stored, imageBytes);
+            broadcastChatMarker(server, stored);
             player.sendSystemMessage(Component.literal("RichChat: image accepted and sent to online players."));
         } catch (IOException exception) {
             player.sendSystemMessage(Component.literal("RichChat: could not store image (" + exception.getMessage() + ")."));
@@ -257,6 +258,18 @@ public final class ImageUploadService {
             byte[] part = java.util.Arrays.copyOfRange(imageBytes, start, end);
             PacketDistributor.sendToAllPlayers(new S2CChunkImagePayload(stored.id(), index, part));
         }
+    }
+
+    private static void broadcastChatMarker(MinecraftServer server, StoredImage image) {
+        Component marker = imageChatMessage(image);
+        for (ServerPlayer recipient : server.getPlayerList().getPlayers()) {
+            recipient.sendSystemMessage(marker);
+        }
+    }
+
+    private static Component imageChatMessage(StoredImage image) {
+        return Component.literal(image.senderName() + " shared an image "
+                + "[[richchat_img:" + image.id() + "]]");
     }
 
     /** Отправляет подключившемуся игроку последние записи истории в пределах заданного бюджета. */
@@ -313,11 +326,14 @@ public final class ImageUploadService {
             return;
         }
 
+        // Серверная история выбрана от новых к старым; чат отображается в хронологическом порядке.
+        java.util.Collections.reverse(transfers);
         List<StoredImage> metadata = transfers.stream().map(HistoryTransfer::image).toList();
         PacketDistributor.sendToPlayer(player, new S2CChatHistoryImagesPayload(metadata));
 
         for (HistoryTransfer transfer : transfers) {
             sendImage(player, transfer.image(), transfer.bytes());
+            player.sendSystemMessage(imageChatMessage(transfer.image()));
         }
 
         RichChat.LOGGER.debug("Sent {} RichChat history images ({} bytes) to {}",

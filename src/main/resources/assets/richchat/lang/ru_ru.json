@@ -6,5 +6,8 @@
   "richchat.tab.stickers": "Стикеры",
   "richchat.action.add": "Добавить",
   "richchat.action.delete": "Удалить",
-  "richchat.error.disabled": "Отправка изображений отключена сервером."
+  "richchat.error.disabled": "Отправка изображений отключена сервером.",
+  "richchat.picker.title": "Библиотека изображений",
+  "richchat.preview.title": "Просмотр изображения",
+  "richchat.preview.unavailable": "Изображение недоступно"
 }

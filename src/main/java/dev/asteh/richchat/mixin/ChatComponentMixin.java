@@ -22,8 +22,8 @@ import java.util.regex.Pattern;
 /** Встраивает маркеры RichChat в модель сообщений ванильного чата. */
 @Mixin(ChatComponent.class)
 public abstract class ChatComponentMixin {
-    private static final Pattern RICHCHAT_MARKER =
-            Pattern.compile("\\[\\[richchat_img:([0-9a-fA-F-]{36})]]");
+    private static final Pattern RICHCHAT_MARKER = Pattern.compile(
+            Pattern.quote("[[richchat_img:") + "([0-9a-fA-F-]{36})" + Pattern.quote("]]"));
 
     @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
     @Shadow private int chatScrollbarPos;
@@ -51,8 +51,8 @@ public abstract class ChatComponentMixin {
             cleanText = "Image";
         }
 
-        // 8 пустых строк резервируют приблизительно 72 пикселя под миниатюру.
-        Component placeholder = Component.literal(cleanText + "\\n".repeat(8));
+        // Переносы строк резервируют место под миниатюру в ванильном списке сообщений.
+        Component placeholder = Component.literal(cleanText + "\n".repeat(8));
         GuiMessageTag richTag = new GuiMessageTag(
                 0,
                 null,

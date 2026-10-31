@@ -41,6 +41,7 @@ public final class ChatImageRenderer {
 
         int end = Math.min(lines.size(), scrollPosition + chat.getLinesPerPage());
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        Set<String> renderedIds = new HashSet<>();
 
         for (int index = Math.max(0, scrollPosition); index < end; index++) {
             GuiMessage.Line line = lines.get(index);

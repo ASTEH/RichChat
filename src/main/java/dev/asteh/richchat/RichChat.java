@@ -23,6 +23,7 @@ public final class RichChat {
         modContainer.registerConfig(ModConfig.Type.CLIENT, RichChatClientConfig.SPEC);
 
         modEventBus.addListener(RichChatNetworking::registerPayloads);
+        NeoForge.EVENT_BUS.addListener(ImageUploadService::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(ImageUploadService::onPlayerLogout);
 
         LOGGER.info("RichChat {} initialized", modContainer.getModInfo().getVersion());

@@ -22,7 +22,7 @@
 - [x] Per-player upload cooldown
 - [x] Store image bytes under the world save folder
 - [x] Persist bounded image metadata history using SavedData
-- [x] Broadcast metadata and S2C image chunks to online clients
+- [x] Broadcast new images to connected clients
 
 ## Stage 2 — Client image library and transport
 
@@ -32,10 +32,16 @@
 - [x] Client file upload API with bounded chunking
 - [x] Receive and assemble server broadcast chunks
 - [x] Validate and cache received images
-- [ ] Send local image library items in chat picker
-- [ ] Replay server history to reconnecting clients
 
-## Stage 3 — Chat integration
+## Stage 3 — History synchronization
+
+- [x] Send bounded history metadata to a joining client
+- [x] Replay image files as bounded S2C chunks
+- [x] Limit history transfer size per login
+- [x] Process history images sequentially on the client
+- [ ] Test reconnect and large-history behavior on a dedicated server
+
+## Stage 4 — Chat integration
 
 - [ ] Chat message model carrying image references (not arbitrary untrusted text markers)
 - [ ] Render inline thumbnails and reserve message height
@@ -43,21 +49,16 @@
 - [ ] Click-to-preview overlay
 - [ ] Preserve all ordinary vanilla messages
 
-## Stage 4 — Picker GUI
+## Stage 5 — Picker GUI and animation
 
 - [ ] GIF / Photos / Stickers tabs
 - [ ] Scrollable 4×5 inventory-style grid
 - [ ] Add file using native file picker
 - [ ] Automatic media-type classification
 - [ ] Sticker dimension policy and warning flow
-- [ ] Context delete and favorite/recent actions
-
-## Stage 5 — Animation, compatibility, and release
-
 - [ ] GIF frame decoder and per-frame timing
 - [ ] Dynamic texture lifecycle and bounded LRU cache
 - [ ] Visible-animation cap
-- [ ] Bounded history replay to reconnecting clients
 - [ ] Dedicated-server classloading tests
 - [ ] Singleplayer, LAN, and dedicated-server tests
 - [ ] Large image, malformed image, reconnect, and anti-spam tests

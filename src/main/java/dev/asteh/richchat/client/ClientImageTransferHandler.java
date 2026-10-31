@@ -4,54 +4,30 @@ import dev.asteh.richchat.RichChat;
 import dev.asteh.richchat.client.storage.LocalImageLibrary;
 import dev.asteh.richchat.network.ImageTransferConstants;
 import dev.asteh.richchat.network.S2CBroadcastImagePayload;
+import dev.asteh.richchat.network.S2CChatHistoryImagesPayload;
 import dev.asteh.richchat.network.S2CChunkImagePayload;
 import dev.asteh.richchat.server.ImageValidator;
 import dev.asteh.richchat.server.StoredImage;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
-/** Сборщик входящих серверных изображений. Вызывается на главном потоке клиента. */
+/** Последовательно собирает входящие изображения, не выделяя память под всю историю сразу. */
 public final class ClientImageTransferHandler {
     private static final int MAX_INCOMING_IMAGE_BYTES = 8 * 1024 * 1024;
-    private static final int MAX_ACTIVE_TRANSFERS = 16;
-    private static final Map<String, IncomingTransfer> TRANSFERS = new LinkedHashMap<>();
+    private static final int MAX_PENDING_TRANSFERS = 1000;
+
+    private static final ArrayDeque<StoredImage> PENDING = new ArrayDeque<>();
+    private static final Set<String> QUEUED_IDS = new HashSet<>();
+    private static IncomingTransfer active;
 
     private ClientImageTransferHandler() {}
 
     public static void handleMetadata(S2CBroadcastImagePayload payload) {
-        if (!isValidUuid(payload.imageId())
-                || payload.category() < 0 || payload.category() > 2
-                || payload.totalBytes() <= 0 || payload.totalBytes() > MAX_INCOMING_IMAGE_BYTES
-                || payload.width() <= 0 || payload.height() <= 0
-                || payload.width() > 8192 || payload.height() > 8192
-                || !isAllowedExtension(payload.extension())) {
-            RichChat.LOGGER.warn("Discarded invalid RichChat image metadata: {}", payload.imageId());
-            return;
-        }
-
-        int expectedChunks = (payload.totalBytes() + ImageTransferConstants.DOWNLOAD_CHUNK_BYTES - 1)
-                / ImageTransferConstants.DOWNLOAD_CHUNK_BYTES;
-        if (payload.chunkCount() != expectedChunks || expectedChunks <= 0) {
-            RichChat.LOGGER.warn("Discarded RichChat metadata with an invalid chunk count: {}", payload.imageId());
-            return;
-        }
-
-        TRANSFERS.remove(payload.imageId());
-        while (TRANSFERS.size() >= MAX_ACTIVE_TRANSFERS) {
-            Iterator<String> iterator = TRANSFERS.keySet().iterator();
-            if (iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
-            } else {
-                break;
-            }
-        }
-
-        StoredImage stored = new StoredImage(
+        enqueue(new StoredImage(
                 payload.imageId(),
                 payload.senderName(),
                 payload.displayName(),
@@ -61,39 +37,80 @@ public final class ClientImageTransferHandler {
                 payload.height(),
                 payload.totalBytes(),
                 System.currentTimeMillis()
-        );
-        TRANSFERS.put(payload.imageId(), new IncomingTransfer(stored, payload.chunkCount()));
+        ));
+    }
+
+    public static void handleHistory(S2CChatHistoryImagesPayload payload) {
+        for (StoredImage image : payload.images()) {
+            enqueue(image);
+        }
+    }
+
+    private static void enqueue(StoredImage image) {
+        if (!isValidImageMetadata(image) || QUEUED_IDS.contains(image.id())) {
+            RichChat.LOGGER.warn("Discarded invalid or repeated RichChat image metadata: {}", image.id());
+            return;
+        }
+        if (PENDING.size() >= MAX_PENDING_TRANSFERS) {
+            RichChat.LOGGER.warn("RichChat pending image queue is full; skipped {}", image.id());
+            return;
+        }
+
+        PENDING.addLast(image);
+        QUEUED_IDS.add(image.id());
+        startNextIfNeeded();
     }
 
     public static void handleChunk(S2CChunkImagePayload payload) {
-        IncomingTransfer transfer = TRANSFERS.get(payload.imageId());
-        if (transfer == null) {
+        if (active == null || !active.image.id().equals(payload.imageId())) {
+            // Пакеты, не относящиеся к текущей передаче, отбрасываются.
             return;
         }
 
         int index = payload.chunkIndex();
-        if (index < 0 || index >= transfer.chunks.length || transfer.chunks[index] != null) {
-            TRANSFERS.remove(payload.imageId());
-            RichChat.LOGGER.warn("Discarded duplicate or out-of-range RichChat image chunk: {}", payload.imageId());
+        if (index < 0 || index >= active.chunks.length || active.chunks[index] != null) {
+            abortActive("duplicate or out-of-range chunk");
             return;
         }
 
         int expectedLength = Math.min(
                 ImageTransferConstants.DOWNLOAD_CHUNK_BYTES,
-                transfer.image.sizeBytes() - index * ImageTransferConstants.DOWNLOAD_CHUNK_BYTES
+                active.image.sizeBytes() - index * ImageTransferConstants.DOWNLOAD_CHUNK_BYTES
         );
         if (payload.data().length != expectedLength) {
-            TRANSFERS.remove(payload.imageId());
-            RichChat.LOGGER.warn("Discarded RichChat image chunk with an invalid length: {}", payload.imageId());
+            abortActive("chunk has an invalid length");
             return;
         }
 
-        transfer.chunks[index] = payload.data().clone();
-        transfer.received++;
+        active.chunks[index] = payload.data().clone();
+        active.received++;
 
-        if (transfer.received == transfer.chunks.length) {
-            TRANSFERS.remove(payload.imageId());
-            finish(transfer);
+        if (active.received == active.chunks.length) {
+            IncomingTransfer completed = active;
+            active = null;
+            finish(completed);
+            startNextIfNeeded();
+        }
+    }
+
+    private static void startNextIfNeeded() {
+        if (active != null) {
+            return;
+        }
+
+        StoredImage next = PENDING.pollFirst();
+        if (next == null) {
+            return;
+        }
+        active = new IncomingTransfer(next);
+    }
+
+    private static void abortActive(String reason) {
+        if (active != null) {
+            RichChat.LOGGER.warn("Aborted RichChat image {}: {}", active.image.id(), reason);
+            QUEUED_IDS.remove(active.image.id());
+            active = null;
+            startNextIfNeeded();
         }
     }
 
@@ -102,12 +119,15 @@ public final class ClientImageTransferHandler {
         int offset = 0;
         for (byte[] chunk : transfer.chunks) {
             if (chunk == null || offset + chunk.length > bytes.length) {
+                RichChat.LOGGER.warn("Incomplete RichChat image {}", transfer.image.id());
+                QUEUED_IDS.remove(transfer.image.id());
                 return;
             }
             System.arraycopy(chunk, 0, bytes, offset, chunk.length);
             offset += chunk.length;
         }
         if (offset != bytes.length) {
+            QUEUED_IDS.remove(transfer.image.id());
             return;
         }
 
@@ -117,6 +137,7 @@ public final class ClientImageTransferHandler {
                 || validation.height() != transfer.image.height()
                 || !matchesExtension(validation.format(), transfer.image.extension())) {
             RichChat.LOGGER.warn("Received RichChat image failed client-side validation: {}", transfer.image.id());
+            QUEUED_IDS.remove(transfer.image.id());
             return;
         }
 
@@ -126,7 +147,18 @@ public final class ClientImageTransferHandler {
                     transfer.image.id(), transfer.image.senderName());
         } catch (IOException exception) {
             RichChat.LOGGER.error("Could not cache received RichChat image {}", transfer.image.id(), exception);
+        } finally {
+            QUEUED_IDS.remove(transfer.image.id());
         }
+    }
+
+    private static boolean isValidImageMetadata(StoredImage image) {
+        return isValidUuid(image.id())
+                && image.category() >= 0 && image.category() <= 2
+                && image.sizeBytes() > 0 && image.sizeBytes() <= MAX_INCOMING_IMAGE_BYTES
+                && image.width() > 0 && image.height() > 0
+                && image.width() <= 8192 && image.height() <= 8192
+                && isAllowedExtension(image.extension());
     }
 
     private static boolean isValidUuid(String value) {
@@ -156,9 +188,11 @@ public final class ClientImageTransferHandler {
         private final byte[][] chunks;
         private int received;
 
-        private IncomingTransfer(StoredImage image, int chunkCount) {
+        private IncomingTransfer(StoredImage image) {
             this.image = image;
-            this.chunks = new byte[chunkCount][];
+            int count = (image.sizeBytes() + ImageTransferConstants.DOWNLOAD_CHUNK_BYTES - 1)
+                    / ImageTransferConstants.DOWNLOAD_CHUNK_BYTES;
+            this.chunks = new byte[count][];
         }
     }
 }

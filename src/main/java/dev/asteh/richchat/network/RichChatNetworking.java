@@ -47,12 +47,16 @@ public final class RichChatNetworking {
                 (payload, context) -> context.enqueueWork(() ->
                         invokeClient("handleMetadata", S2CBroadcastImagePayload.class, payload)));
 
+        registrar.playToClient(S2CChatHistoryImagesPayload.TYPE, S2CChatHistoryImagesPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() ->
+                        invokeClient("handleHistory", S2CChatHistoryImagesPayload.class, payload)));
+
         registrar.playToClient(S2CChunkImagePayload.TYPE, S2CChunkImagePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() ->
                         invokeClient("handleChunk", S2CChunkImagePayload.class, payload)));
     }
 
-    /* Client-only classes не должны загружаться в common-графе dedicated server. */
+    /* Client-only классы не должны загружаться в common-графе dedicated server. */
     private static void invokeClient(String methodName, Class<?> payloadType, Object payload) {
         try {
             Class<?> handler = Class.forName(CLIENT_HANDLER);

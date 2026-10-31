@@ -11,17 +11,18 @@ A standalone Minecraft 1.21.1 / NeoForge 21.1.x mod for shared chat images, anim
 
 ## Current status
 
-The server upload pipeline and client transfer/cache pipeline are implemented and compile in CI:
+The server upload, storage, client transfer, and history-sync pipelines compile in CI:
 
 - Server accepts upload metadata and bounded 24 KiB C2S chunks.
 - Server validates PNG/JPEG/GIF signatures and decodes images before saving.
 - Server stores accepted image bytes under the current world save folder and stores bounded history metadata using SavedData.
-- Server broadcasts image metadata and 48 KiB S2C chunks to online clients.
-- Client assembles incoming chunks and caches validated received images.
+- Server broadcasts new images to connected clients.
+- A joining player receives saved image history, constrained by the configurable total transfer budget (default 8 MiB per login).
+- Client assembles the incoming history sequentially and caches validated images.
+- Client library supports local import, delete, favorites, recent-use timestamps, and a JSON index.
 - Client exposes an asynchronous file upload method for the upcoming picker.
-- Local image library supports photos/GIFs/stickers, JSON metadata, favorite flags, recent-use timestamps, import, and delete.
 
-**Not implemented yet:** inline chat rendering, chat history replay to players joining later, picker GUI, preview overlay, and GIF frame playback. The transfer pipeline alone does not yet draw images in the visible chat.
+**Not implemented yet:** inline chat rendering, picker GUI, preview overlay, and GIF frame playback. Image files are transferred and cached, but are not yet drawn in the visible chat.
 
 ## Build
 
@@ -53,4 +54,4 @@ On Linux/macOS, use `./gradlew build` after generating the wrapper.
 - Server policy: NeoForge SERVER config, `richchat-server.toml` (world/serverconfig).
 - Client UI: NeoForge CLIENT config, `richchat-client.toml`.
 
-The server config is authoritative for upload limits and moderation rules.
+The server config is authoritative for upload limits, moderation, and join-history transfer budgets.

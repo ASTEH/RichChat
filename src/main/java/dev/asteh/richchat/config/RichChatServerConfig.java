@@ -13,6 +13,7 @@ public final class RichChatServerConfig {
     public static final ModConfigSpec.IntValue ANTI_SPAM_COOLDOWN_MS;
     public static final ModConfigSpec.BooleanValue KEEP_HISTORY;
     public static final ModConfigSpec.IntValue HISTORY_SIZE;
+    public static final ModConfigSpec.IntValue MAX_HISTORY_TRANSFER_KB;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -32,6 +33,8 @@ public final class RichChatServerConfig {
                 .define("keepHistory", true);
         HISTORY_SIZE = builder.comment("Максимальное количество изображений в истории.")
                 .defineInRange("historySize", 100, 0, 1000);
+        MAX_HISTORY_TRANSFER_KB = builder.comment("Максимальный суммарный объём истории, отправляемой одному подключившемуся игроку.")
+                .defineInRange("maxHistoryTransferKb", 8192, 0, 65536);
         builder.pop();
 
         SPEC = builder.build();

@@ -5,14 +5,20 @@ import dev.asteh.richchat.network.C2SUploadImageChunkPayload;
 import dev.asteh.richchat.network.C2SUploadImageStartPayload;
 import dev.asteh.richchat.network.ImageTransferConstants;
 import dev.asteh.richchat.network.S2CBroadcastImagePayload;
+import dev.asteh.richchat.network.S2CChatHistoryImagesPayload;
 import dev.asteh.richchat.network.S2CChunkImagePayload;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -222,33 +228,111 @@ public final class ImageUploadService {
                 ChatImageHistoryData.get(server).add(stored, RichChatServerConfig.HISTORY_SIZE.get());
             }
 
-            int downloadChunks = (imageBytes.length + DOWNLOAD_CHUNK_BYTES - 1) / DOWNLOAD_CHUNK_BYTES;
-            PacketDistributor.sendToAllPlayers(new S2CBroadcastImagePayload(
-                    imageId,
-                    stored.senderName(),
-                    stored.displayName(),
-                    stored.extension(),
-                    stored.category(),
-                    stored.width(),
-                    stored.height(),
-                    stored.sizeBytes(),
-                    downloadChunks
-            ));
-
-            for (int index = 0; index < downloadChunks; index++) {
-                int start = index * DOWNLOAD_CHUNK_BYTES;
-                int end = Math.min(imageBytes.length, start + DOWNLOAD_CHUNK_BYTES);
-                byte[] part = java.util.Arrays.copyOfRange(imageBytes, start, end);
-                PacketDistributor.sendToAllPlayers(new S2CChunkImagePayload(imageId, index, part));
-            }
-
+            sendImage(player.getServer(), stored, imageBytes);
             player.sendSystemMessage(Component.literal("RichChat: image accepted and sent to online players."));
         } catch (IOException exception) {
             player.sendSystemMessage(Component.literal("RichChat: could not store image (" + exception.getMessage() + ")."));
         }
     }
 
-    public static void onPlayerLogout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+    private static void sendImage(MinecraftServer server, StoredImage stored, byte[] imageBytes) {
+        int downloadChunks = (imageBytes.length + DOWNLOAD_CHUNK_BYTES - 1) / DOWNLOAD_CHUNK_BYTES;
+        PacketDistributor.sendToAllPlayers(new S2CBroadcastImagePayload(
+                stored.id(),
+                stored.senderName(),
+                stored.displayName(),
+                stored.extension(),
+                stored.category(),
+                stored.width(),
+                stored.height(),
+                stored.sizeBytes(),
+                downloadChunks
+        ));
+
+        for (int index = 0; index < downloadChunks; index++) {
+            int start = index * DOWNLOAD_CHUNK_BYTES;
+            int end = Math.min(imageBytes.length, start + DOWNLOAD_CHUNK_BYTES);
+            byte[] part = java.util.Arrays.copyOfRange(imageBytes, start, end);
+            PacketDistributor.sendToAllPlayers(new S2CChunkImagePayload(stored.id(), index, part));
+        }
+    }
+
+    /** Отправляет подключившемуся игроку последние записи истории в пределах заданного бюджета. */
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)
+                || !RichChatServerConfig.ENABLED.get()
+                || !RichChatServerConfig.KEEP_HISTORY.get()
+                || RichChatServerConfig.HISTORY_SIZE.get() <= 0) {
+            return;
+        }
+
+        MinecraftServer server = player.getServer();
+        if (server == null) {
+            return;
+        }
+
+        List<StoredImage> history = ChatImageHistoryData.get(server).entries();
+        long maxTransferBytes = (long) RichChatServerConfig.MAX_HISTORY_TRANSFER_KB.get() * 1024L;
+        if (history.isEmpty() || maxTransferBytes <= 0L) {
+            PacketDistributor.sendToPlayer(player, new S2CChatHistoryImagesPayload(List.of()));
+            return;
+        }
+
+        List<HistoryTransfer> transfers = new ArrayList<>();
+        long totalBytes = 0L;
+
+        // Идём от самых новых записей к старым: бюджет в первую очередь сохраняет свежую историю.
+        for (int index = history.size() - 1; index >= 0; index--) {
+            StoredImage image = history.get(index);
+            if (transfers.size() >= S2CChatHistoryImagesPayload.MAX_ENTRIES
+                    || image.sizeBytes() <= 0
+                    || totalBytes + image.sizeBytes() > maxTransferBytes) {
+                continue;
+            }
+
+            try {
+                Path path = ImageStorage.resolve(server, image);
+                long diskSize = Files.size(path);
+                if (diskSize != image.sizeBytes() || diskSize > maxTransferBytes) {
+                    RichChat.LOGGER.warn("Skipped RichChat history file with a size mismatch: {}", image.id());
+                    continue;
+                }
+
+                byte[] bytes = Files.readAllBytes(path);
+                transfers.add(new HistoryTransfer(image, bytes));
+                totalBytes += bytes.length;
+            } catch (IOException exception) {
+                RichChat.LOGGER.warn("Could not read RichChat history image {}", image.id(), exception);
+            }
+        }
+
+        if (transfers.isEmpty()) {
+            PacketDistributor.sendToPlayer(player, new S2CChatHistoryImagesPayload(List.of()));
+            return;
+        }
+
+        List<StoredImage> metadata = transfers.stream().map(HistoryTransfer::image).toList();
+        PacketDistributor.sendToPlayer(player, new S2CChatHistoryImagesPayload(metadata));
+
+        for (HistoryTransfer transfer : transfers) {
+            sendImage(player, transfer.image(), transfer.bytes());
+        }
+
+        RichChat.LOGGER.debug("Sent {} RichChat history images ({} bytes) to {}",
+                transfers.size(), totalBytes, player.getGameProfile().getName());
+    }
+
+    private static void sendImage(ServerPlayer player, StoredImage image, byte[] bytes) {
+        int downloadChunks = (bytes.length + DOWNLOAD_CHUNK_BYTES - 1) / DOWNLOAD_CHUNK_BYTES;
+        for (int index = 0; index < downloadChunks; index++) {
+            int start = index * DOWNLOAD_CHUNK_BYTES;
+            int end = Math.min(bytes.length, start + DOWNLOAD_CHUNK_BYTES);
+            PacketDistributor.sendToPlayer(player, new S2CChunkImagePayload(
+                    image.id(), index, java.util.Arrays.copyOfRange(bytes, start, end)));
+        }
+    }
+
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         ACTIVE_UPLOADS.remove(event.getEntity().getUUID());
     }
 
@@ -274,6 +358,8 @@ public final class ImageUploadService {
         }
         return value;
     }
+
+    private record HistoryTransfer(StoredImage image, byte[] bytes) {}
 
     private static final class UploadSession {
         private final UUID id;

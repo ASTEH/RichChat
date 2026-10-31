@@ -7,17 +7,24 @@
 - [x] RegisterPayloadHandlersEvent registration point
 - [x] Ping/pong protocol smoke-test payloads
 - [x] GitHub Actions build workflow
+- [x] Fix ByteBufCodecs long codec against 1.21.1 API
 - [ ] Confirm first CI build succeeds
 
-## Stage 1 — Server image protocol
+## Stage 1 — Server upload and storage
 
-- [ ] Upload metadata and chunk payloads
-- [ ] Bounded in-memory upload sessions and timeouts
-- [ ] Validate signatures, decoded format, dimensions, byte count, and animation frame count
-- [ ] Per-player cooldown and per-player concurrent-transfer limits
-- [ ] Persist accepted images under the world save directory
-- [ ] Broadcast image metadata and chunks to connected clients
-- [ ] Send bounded chat image history to newly joined players
+- [x] Start-upload and chunk payloads
+- [x] Enforce bounded C2S chunk codec (24 KiB)
+- [x] In-memory upload session cap, timeout, and one session per player
+- [x] Validate PNG/JPEG/GIF signatures and decode through ImageIO
+- [x] Enforce file-size and image-dimension limits on server
+- [x] Detect GIF animation and normalize photo/GIF categories
+- [x] Apply sticker dimension limit (128×128)
+- [x] Per-player upload cooldown
+- [x] Store image bytes under the world save folder
+- [x] Persist bounded image metadata history using SavedData
+- [x] Broadcast metadata and S2C image chunks to online clients
+- [ ] Client-side chunk assembly and display
+- [ ] Replay history to joining clients
 
 ## Stage 2 — Client image library and decoding
 
@@ -48,6 +55,7 @@
 
 - [ ] Frame scheduler based on per-frame GIF delays
 - [ ] Visible-animation cap
+- [ ] Bounded history replay to reconnecting clients
 - [ ] Dedicated-server classloading tests
 - [ ] Singleplayer, LAN, and dedicated-server tests
 - [ ] Large image, malformed image, reconnect, and anti-spam tests

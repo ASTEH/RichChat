@@ -1,0 +1,10 @@
+{
+  "richchat.category": "RichChat",
+  "richchat.chat.open_picker": "Open image picker",
+  "richchat.tab.gifs": "GIFs",
+  "richchat.tab.photos": "Photos",
+  "richchat.tab.stickers": "Stickers",
+  "richchat.action.add": "Add",
+  "richchat.action.delete": "Delete",
+  "richchat.error.disabled": "Image sharing is disabled by the server."
+}

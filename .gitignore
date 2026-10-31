@@ -1,0 +1,20 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Minecraft runs
+run/
+run-*/
+logs/
+crash-reports/
+
+# Local configuration and generated data
+config/
+*.log

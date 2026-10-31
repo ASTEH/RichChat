@@ -1,0 +1,10 @@
+{
+  "richchat.category": "RichChat",
+  "richchat.chat.open_picker": "Открыть панель изображений",
+  "richchat.tab.gifs": "GIF",
+  "richchat.tab.photos": "Фото",
+  "richchat.tab.stickers": "Стикеры",
+  "richchat.action.add": "Добавить",
+  "richchat.action.delete": "Удалить",
+  "richchat.error.disabled": "Отправка изображений отключена сервером."
+}

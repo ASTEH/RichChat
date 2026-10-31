@@ -12,6 +12,7 @@ public record S2CBroadcastImagePayload(
         String imageId,
         String senderName,
         String displayName,
+        String extension,
         int category,
         int width,
         int height,
@@ -24,12 +25,14 @@ public record S2CBroadcastImagePayload(
     private static final StreamCodec<ByteBuf, String> ID_CODEC = ByteBufCodecs.stringUtf8(36);
     private static final StreamCodec<ByteBuf, String> SENDER_CODEC = ByteBufCodecs.stringUtf8(64);
     private static final StreamCodec<ByteBuf, String> NAME_CODEC = ByteBufCodecs.stringUtf8(128);
+    private static final StreamCodec<ByteBuf, String> EXTENSION_CODEC = ByteBufCodecs.stringUtf8(8);
 
     public static final StreamCodec<ByteBuf, S2CBroadcastImagePayload> STREAM_CODEC = StreamCodec.of(
             (buffer, value) -> {
                 ID_CODEC.encode(buffer, value.imageId);
                 SENDER_CODEC.encode(buffer, value.senderName);
                 NAME_CODEC.encode(buffer, value.displayName);
+                EXTENSION_CODEC.encode(buffer, value.extension);
                 ByteBufCodecs.VAR_INT.encode(buffer, value.category);
                 ByteBufCodecs.VAR_INT.encode(buffer, value.width);
                 ByteBufCodecs.VAR_INT.encode(buffer, value.height);
@@ -40,6 +43,7 @@ public record S2CBroadcastImagePayload(
                     ID_CODEC.decode(buffer),
                     SENDER_CODEC.decode(buffer),
                     NAME_CODEC.decode(buffer),
+                    EXTENSION_CODEC.decode(buffer),
                     ByteBufCodecs.VAR_INT.decode(buffer),
                     ByteBufCodecs.VAR_INT.decode(buffer),
                     ByteBufCodecs.VAR_INT.decode(buffer),

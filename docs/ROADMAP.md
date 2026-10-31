@@ -8,7 +8,7 @@
 - [x] Ping/pong protocol smoke-test payloads
 - [x] GitHub Actions build workflow
 - [x] Fix ByteBufCodecs long codec against 1.21.1 API
-- [ ] Confirm first CI build succeeds
+- [x] CI build succeeds
 
 ## Stage 1 — Server upload and storage
 
@@ -23,16 +23,17 @@
 - [x] Store image bytes under the world save folder
 - [x] Persist bounded image metadata history using SavedData
 - [x] Broadcast metadata and S2C image chunks to online clients
-- [ ] Client-side chunk assembly and display
-- [ ] Replay history to joining clients
 
-## Stage 2 — Client image library and decoding
+## Stage 2 — Client image library and transport
 
-- [ ] Local image folders: gifs/photos/stickers
-- [ ] JSON image index with metadata, favorite, and recent fields
-- [ ] PNG/JPEG/GIF decoding with frame timing
-- [ ] Optional WebP reader only when a compatible ImageIO provider is present
-- [ ] Dynamic texture lifecycle and bounded LRU cache
+- [x] Local image folders: gifs/photos/stickers
+- [x] JSON image index with metadata, favorite, and recent-use fields
+- [x] Local import and delete methods
+- [x] Client file upload API with bounded chunking
+- [x] Receive and assemble server broadcast chunks
+- [x] Validate and cache received images
+- [ ] Send local image library items in chat picker
+- [ ] Replay server history to reconnecting clients
 
 ## Stage 3 — Chat integration
 
@@ -53,7 +54,8 @@
 
 ## Stage 5 — Animation, compatibility, and release
 
-- [ ] Frame scheduler based on per-frame GIF delays
+- [ ] GIF frame decoder and per-frame timing
+- [ ] Dynamic texture lifecycle and bounded LRU cache
 - [ ] Visible-animation cap
 - [ ] Bounded history replay to reconnecting clients
 - [ ] Dedicated-server classloading tests

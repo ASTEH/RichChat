@@ -6,8 +6,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /** Регистрация версионированного протокола RichChat. */
 public final class RichChatNetworking {
+    private static final String CLIENT_HANDLER = "dev.asteh.richchat.client.ClientImagePayloads";
+
     private RichChatNetworking() {}
 
     public static void registerPayloads(final RegisterPayloadHandlersEvent event) {
@@ -40,13 +45,30 @@ public final class RichChatNetworking {
 
         registrar.playToClient(S2CBroadcastImagePayload.TYPE, S2CBroadcastImagePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() ->
-                        RichChat.LOGGER.debug("RichChat image metadata received: {}", payload.imageId())));
+                        invokeClient("handleMetadata", S2CBroadcastImagePayload.class, payload)));
 
         registrar.playToClient(S2CChunkImagePayload.TYPE, S2CChunkImagePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> {
-                    // Клиентский сборщик чанков будет подключён на следующем этапе.
-                    RichChat.LOGGER.debug("RichChat image chunk received: {} / {}",
-                            payload.imageId(), payload.chunkIndex());
-                }));
+                (payload, context) -> context.enqueueWork(() ->
+                        invokeClient("handleChunk", S2CChunkImagePayload.class, payload)));
+    }
+
+    /* Client-only classes не должны загружаться в common-графе dedicated server. */
+    private static void invokeClient(String methodName, Class<?> payloadType, Object payload) {
+        try {
+            Class<?> handler = Class.forName(CLIENT_HANDLER);
+            Method method = handler.getMethod(methodName, payloadType);
+            method.invoke(null, payload);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException exception) {
+            RichChat.LOGGER.error("Could not dispatch client payload {}", methodName, exception);
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException("RichChat client payload failed: " + methodName, cause);
+        }
     }
 }

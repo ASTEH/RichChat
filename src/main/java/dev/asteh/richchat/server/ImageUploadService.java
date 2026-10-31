@@ -3,6 +3,7 @@ package dev.asteh.richchat.server;
 import dev.asteh.richchat.config.RichChatServerConfig;
 import dev.asteh.richchat.network.C2SUploadImageChunkPayload;
 import dev.asteh.richchat.network.C2SUploadImageStartPayload;
+import dev.asteh.richchat.network.ImageTransferConstants;
 import dev.asteh.richchat.network.S2CBroadcastImagePayload;
 import dev.asteh.richchat.network.S2CChunkImagePayload;
 import net.minecraft.network.chat.Component;
@@ -11,19 +12,18 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /** Серверный менеджер загрузок. Все методы вызываются с главного серверного потока. */
 public final class ImageUploadService {
-    public static final int UPLOAD_CHUNK_BYTES = 24 * 1024;
-    public static final int DOWNLOAD_CHUNK_BYTES = 48 * 1024;
+    public static final int UPLOAD_CHUNK_BYTES = ImageTransferConstants.UPLOAD_CHUNK_BYTES;
+    public static final int DOWNLOAD_CHUNK_BYTES = ImageTransferConstants.DOWNLOAD_CHUNK_BYTES;
 
     private static final int MAX_ACTIVE_UPLOADS = 16;
     private static final long UPLOAD_TIMEOUT_MS = 30_000L;
+    private static final long COOLDOWN_TRACKING_TTL_MS = 120_000L;
     private static final int MAX_STICKER_DIMENSION = 128;
 
     private static final Map<UUID, UploadSession> ACTIVE_UPLOADS = new HashMap<>();
@@ -227,6 +227,7 @@ public final class ImageUploadService {
                     imageId,
                     stored.senderName(),
                     stored.displayName(),
+                    stored.extension(),
                     stored.category(),
                     stored.width(),
                     stored.height(),
@@ -254,6 +255,7 @@ public final class ImageUploadService {
     private static void cleanupExpired() {
         long now = System.currentTimeMillis();
         ACTIVE_UPLOADS.entrySet().removeIf(entry -> now > entry.getValue().expiresAtMillis);
+        LAST_UPLOAD_AT.entrySet().removeIf(entry -> now - entry.getValue() > COOLDOWN_TRACKING_TTL_MS);
     }
 
     private static void reject(ServerPlayer player, String reason) {

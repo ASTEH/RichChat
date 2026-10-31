@@ -1,7 +1,6 @@
 package dev.asteh.richchat.network;
 
 import dev.asteh.richchat.RichChat;
-import dev.asteh.richchat.server.ImageUploadService;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -16,7 +15,7 @@ public record C2SUploadImageChunkPayload(String uploadId, int chunkIndex, byte[]
 
     private static final StreamCodec<ByteBuf, String> ID_CODEC = ByteBufCodecs.stringUtf8(36);
     private static final StreamCodec<ByteBuf, byte[]> DATA_CODEC =
-            ByteBufCodecs.byteArray(ImageUploadService.UPLOAD_CHUNK_BYTES);
+            ByteBufCodecs.byteArray(ImageTransferConstants.UPLOAD_CHUNK_BYTES);
 
     public static final StreamCodec<ByteBuf, C2SUploadImageChunkPayload> STREAM_CODEC = StreamCodec.of(
             (buffer, value) -> {

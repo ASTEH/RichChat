@@ -1,5 +1,7 @@
 package dev.asteh.richchat.server;
 
+import dev.asteh.richchat.RichChat;
+
 import dev.asteh.richchat.config.RichChatServerConfig;
 import dev.asteh.richchat.network.C2SUploadImageChunkPayload;
 import dev.asteh.richchat.network.C2SUploadImageStartPayload;

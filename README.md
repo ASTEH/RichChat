@@ -16,15 +16,13 @@ Implemented in this development branch:
 - Server validates, stores, broadcasts, and retains bounded image history.
 - Client uploads local files, receives server chunks, and caches image files locally.
 - New players receive recent image history within a configurable transfer budget.
-- Chat messages containing server-issued image identifiers become tagged RichChat entries.
-- The chat screen has a RichChat picker button.
-- The picker has GIF / Photos / Stickers tabs, a scrollable 4×5 grid, native file import, automatic file-type detection, and right-click deletion.
+- The chat screen has a RichChat picker button with GIF / Photos / Stickers tabs, a 4×5 scrollable grid, file import, and right-click deletion.
 - Chat thumbnails draw inside the reserved chat entry; clicking opens a preview overlay.
-- The dynamic texture cache is bounded to 48 entries.
+- GIF animation reads frame timing and disposal metadata, composites partial frames, and loops in chat and preview.
+- At most the configured number of GIFs are updated in the visible chat area.
+- Decoded GIF frame memory is bounded to 64 MiB; GPU textures are held in a 48-entry LRU cache.
 
-**Not implemented yet:** animated GIF frame playback. GIF files currently display their first frame. WebP is also not enabled by the standard ImageIO runtime.
-
-The chat input button is registered with NeoForge ScreenEvent.Init.Post rather than a ChatScreen mixin. The client-only ChatComponent mixin adds per-message image metadata without changing how normal chat input is sent.
+The chat input button uses NeoForge ScreenEvent.Init.Post. The client-only ChatComponent mixin adds per-message image metadata without changing normal chat input.
 
 ## Build
 
@@ -51,7 +49,7 @@ gradle wrapper --gradle-version 9.2.1
 
 ## Controls
 
-1. Open the vanilla chat and click the small image button next to the input field.
+1. Open vanilla chat and click the image button beside the input field.
 2. Select GIF, Photos, or Stickers.
 3. Click Add to import a local image.
 4. Left-click an item to upload it to the server.
@@ -61,7 +59,6 @@ gradle wrapper --gradle-version 9.2.1
 
 ## Limitations
 
-- Animated GIFs currently render their first frame only.
-- WebP requires an additional ImageIO provider.
 - The native file picker uses Java AWT and requires a desktop environment.
-- Thumbnail placement and hit-testing need manual checks at different GUI scales, chat opacity settings, and with many wrapped chat messages.
+- The default ImageIO runtime supports PNG, JPEG, and GIF. WebP needs an additional ImageIO provider.
+- Chat layout and click hitboxes still need manual checks at multiple GUI scales.

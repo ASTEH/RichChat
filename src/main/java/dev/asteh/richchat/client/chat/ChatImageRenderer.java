@@ -1,8 +1,12 @@
 package dev.asteh.richchat.client.chat;
 
+import dev.asteh.richchat.RichChat;
+import dev.asteh.richchat.client.AnimatedGifCache;
+import dev.asteh.richchat.client.GifAnimationCache;
 import dev.asteh.richchat.client.ImageTextureCache;
 import dev.asteh.richchat.client.gui.ImagePreviewOverlay;
 import dev.asteh.richchat.client.storage.LocalImageLibrary;
+import dev.asteh.richchat.config.RichChatClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.gui.GuiGraphics;
@@ -44,11 +48,14 @@ public final class ChatImageRenderer {
         int end = Math.min(lines.size(), scrollPosition + chat.getLinesPerPage());
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
         Set<String> renderedIds = new HashSet<>();
+        int animatedOnScreen = 0;
+        int maxAnimatedOnScreen = RichChatClientConfig.ANIMATE_IN_CHAT.get()
+                ? RichChatClientConfig.MAX_ANIMATED_ON_SCREEN.get() : 0;
 
         for (int index = Math.max(0, scrollPosition); index < end; index++) {
             GuiMessage.Line line = lines.get(index);
             String imageId = imageIdFrom(line);
-            if (imageId == null) {
+            if (imageId == null || !renderedIds.add(imageId)) {
                 continue;
             }
 
@@ -62,7 +69,21 @@ public final class ChatImageRenderer {
             }
 
             try {
-                ImageTextureCache.TextureEntry texture = ImageTextureCache.get(imageId, path);
+                ImageTextureCache.TextureEntry texture;
+                boolean isGif = path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".gif");
+                if (isGif && animatedOnScreen < maxAnimatedOnScreen) {
+                    GifAnimationCache.Frame frame = GifAnimationCache.getFrame(
+                            imageId, path, System.currentTimeMillis());
+                    if (frame != null) {
+                        texture = ImageTextureCache.update(imageId, frame.index(), frame.image());
+                        animatedOnScreen++;
+                    } else {
+                        texture = ImageTextureCache.get(imageId, path);
+                    }
+                } else {
+                    texture = ImageTextureCache.get(imageId, path);
+                }
+
                 double row = index - scrollPosition;
                 int bottom = (int) Math.round(screenHeight - CHAT_BOTTOM_OFFSET * scale
                         - row * VANILLA_LINE_HEIGHT * scale);
@@ -80,7 +101,25 @@ public final class ChatImageRenderer {
 
                 HITBOXES.add(new ImageHitbox(imageId, path, x, y, drawWidth, drawHeight));
             } catch (IOException | RuntimeException exception) {
-                dev.asteh.richchat.RichChat.LOGGER.warn("Could not render RichChat image {}", imageId, exception);
+                RichChat.LOGGER.warn("Could not render RichChat image {}", imageId, exception);
+                try {
+                    ImageTextureCache.TextureEntry fallback = ImageTextureCache.get(imageId, path);
+                    int fallbackSize = Math.max(1, (int) Math.round(IMAGE_SIZE * scale));
+                    double fit = Math.min((double) fallbackSize / fallback.width(),
+                            (double) fallbackSize / fallback.height());
+                    int drawWidth = Math.max(1, (int) Math.round(fallback.width() * fit));
+                    int drawHeight = Math.max(1, (int) Math.round(fallback.height() * fit));
+                    int x = (int) Math.round(4.0D * scale);
+                    double row = index - scrollPosition;
+                    int bottom = (int) Math.round(screenHeight - CHAT_BOTTOM_OFFSET * scale
+                            - row * VANILLA_LINE_HEIGHT * scale);
+                    int y = bottom - drawHeight - (int) Math.round(scale);
+                    graphics.blit(fallback.location(), x, y, 0.0F, 0.0F,
+                            drawWidth, drawHeight, fallback.width(), fallback.height());
+                    HITBOXES.add(new ImageHitbox(imageId, path, x, y, drawWidth, drawHeight));
+                } catch (IOException ignored) {
+                    // Keep the vanilla chat usable if the local file has become unreadable.
+                }
             }
         }
     }

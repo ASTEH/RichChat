@@ -1,5 +1,6 @@
 package dev.asteh.richchat.client.gui;
 
+import dev.asteh.richchat.client.GifAnimationCache;
 import dev.asteh.richchat.client.ImageTextureCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,7 +38,17 @@ public final class ImagePreviewOverlay extends Screen {
         graphics.drawCenteredString(font, title, width / 2, 18, 0xFFFFFFFF);
 
         try {
-            ImageTextureCache.TextureEntry texture = ImageTextureCache.get(imageId, imagePath);
+            ImageTextureCache.TextureEntry texture;
+            if (imagePath.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".gif")) {
+                GifAnimationCache.Frame frame = GifAnimationCache.getFrame(
+                        imageId, imagePath, System.currentTimeMillis());
+                texture = frame == null
+                        ? ImageTextureCache.get(imageId, imagePath)
+                        : ImageTextureCache.update(imageId, frame.index(), frame.image());
+            } else {
+                texture = ImageTextureCache.get(imageId, imagePath);
+            }
+
             int maxWidth = Math.max(32, width - 48);
             int maxHeight = Math.max(32, height - 82);
             double fit = Math.min((double) maxWidth / texture.width(),

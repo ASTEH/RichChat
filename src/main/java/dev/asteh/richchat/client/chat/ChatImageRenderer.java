@@ -1,7 +1,6 @@
 package dev.asteh.richchat.client.chat;
 
 import dev.asteh.richchat.RichChat;
-import dev.asteh.richchat.client.AnimatedGifCache;
 import dev.asteh.richchat.client.GifAnimationCache;
 import dev.asteh.richchat.client.ImageTextureCache;
 import dev.asteh.richchat.client.gui.ImagePreviewOverlay;

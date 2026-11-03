@@ -41,5 +41,22 @@
   "richchat.status.upload_queued": "Upload packets sent to server: %1$s",
   "richchat.status.favorite_removed": "Removed from favorites.",
   "richchat.status.favorite_added": "Added to favorites.",
-  "richchat.status.deleted": "Deleted: %1$s"
+  "richchat.status.deleted": "Deleted: %1$s",
+  "richchat.file_browser.title": "Choose an image",
+  "richchat.file_browser.subtitle": "Open a folder and select a PNG, JPG, JPEG, or GIF file",
+  "richchat.file_browser.path": "Folder path",
+  "richchat.file_browser.path_hint": "Enter a folder path and press Go",
+  "richchat.file_browser.go": "Go",
+  "richchat.file_browser.no_file": "No file selected",
+  "richchat.file_browser.selected": "Selected: %1$s",
+  "richchat.file_browser.empty": "No images or subfolders in this directory.",
+  "richchat.file_browser.instructions": "Click a folder to open it or an image to select it.",
+  "richchat.file_browser.enter_path": "Enter a folder path first.",
+  "richchat.file_browser.invalid_path": "The path is invalid.",
+  "richchat.file_browser.not_directory": "The selected path is not a directory.",
+  "richchat.file_browser.access_denied": "Could not read this directory.",
+  "richchat.file_browser.list_truncated": "Showing the first %1$s entries. Narrow the folder.",
+  "richchat.file_browser.folder_opened": "Items in folder: %1$s",
+  "richchat.file_browser.ready": "File selected. Press Choose File to import it.",
+  "richchat.file_browser.choose": "Choose File"
 }

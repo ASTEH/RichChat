@@ -14,15 +14,17 @@ A standalone Minecraft 1.21.1 / NeoForge 21.1.x mod for shared chat images, anim
 Implemented in this development branch:
 
 - Server validates, stores, broadcasts, and retains bounded image history.
-- Client uploads local files, receives server chunks, and caches image files locally.
+- Client imports local PNG/JPEG/GIF files into a per-category library, uploads selected images, and caches received images.
 - New players receive recent image history within a configurable transfer budget.
-- The chat screen has a RichChat picker button with GIF / Photos / Stickers tabs, a 4×5 scrollable grid, file import, and right-click deletion.
+- The media library uses an Aftermath-inspired charcoal / muted-olive / amber palette, responsive panels, custom hover/selected states, and a compact layout for smaller GUI sizes.
+- Library controls include category navigation, filename search, favorites, preview, explicit import / send / delete actions, and grid scrolling.
+- Sticker imports are limited to 128×128; GIFs are detected from the file rather than relying on the currently selected tab.
 - Chat thumbnails draw inside the reserved chat entry; clicking opens a preview overlay.
 - GIF animation reads frame timing and disposal metadata, composites partial frames, and loops in chat and preview.
 - At most the configured number of GIFs are updated in the visible chat area.
 - Decoded GIF frame memory is bounded to 64 MiB; GPU textures are held in a 48-entry LRU cache.
 
-The chat input button uses NeoForge ScreenEvent.Init.Post. The client-only ChatComponent mixin adds per-message image metadata without changing normal chat input.
+RichChat reuses Aftermath's visual language without requiring SDM UI Lib. The chat input button uses NeoForge ScreenEvent.Init.Post, and the client-only ChatComponent mixin adds per-message image metadata without changing normal chat input.
 
 ## Build
 
@@ -49,16 +51,20 @@ gradle wrapper --gradle-version 9.2.1
 
 ## Controls
 
-1. Open vanilla chat and click the image button beside the input field.
-2. Select GIF, Photos, or Stickers.
-3. Click Add to import a local image.
-4. Left-click an item to upload it to the server.
-5. Right-click an item to delete it from the local library.
-6. Scroll over the grid to browse more items.
-7. Click an image in chat to open its preview.
+1. Open vanilla chat and click the RichChat media button beside the input field.
+2. Select Photos, GIFs, or Stickers.
+3. Press Import and choose a PNG, JPG, JPEG, or GIF file from your computer.
+4. Select an item in the grid; inspect its preview and details in the side panel.
+5. Press Send to upload it to the server and share it with connected players.
+6. Use the star button to add or remove a favorite; use Delete to remove the local copy.
+7. Search by filename and scroll over the grid to browse more items.
+8. Click an image in chat to open its preview.
+
+The panel scale is configurable through the RichChat client config. GIF playback and the number of simultaneously animated chat images are configurable there as well.
 
 ## Limitations
 
 - The native file picker uses Java AWT and requires a desktop environment.
 - The default ImageIO runtime supports PNG, JPEG, and GIF. WebP needs an additional ImageIO provider.
-- Chat layout and click hitboxes still need manual checks at multiple GUI scales.
+- The UI has been build-checked but still needs manual testing in Minecraft at several GUI scales and aspect ratios.
+- Server upload acceptance and multi-client sharing still require in-game validation.

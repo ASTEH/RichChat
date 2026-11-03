@@ -53,7 +53,7 @@ gradle wrapper --gradle-version 9.2.1
 
 1. Open vanilla chat and click the RichChat media button beside the input field.
 2. Select Photos, GIFs, or Stickers.
-3. Press Import and choose a PNG, JPG, JPEG, or GIF file from your computer.
+3. Press Import to open the in-game file browser. Navigate folders, paste a folder or image path into the location field, then select a PNG, JPG, JPEG, or GIF file.
 4. Select an item in the grid; inspect its preview and details in the side panel.
 5. Press Send to upload it to the server and share it with connected players.
 6. Use the star button to add or remove a favorite; use Delete to remove the local copy.
@@ -64,7 +64,7 @@ The panel scale is configurable through the RichChat client config. GIF playback
 
 ## Limitations
 
-- The native file picker uses Java AWT and requires a desktop environment.
+- Import uses a built-in in-game file browser and does not depend on Java AWT or the operating system's native file dialog. It shows up to 500 folders/images in each directory for predictable performance.
 - The default ImageIO runtime supports PNG, JPEG, and GIF. WebP needs an additional ImageIO provider.
 - The UI has been build-checked but still needs manual testing in Minecraft at several GUI scales and aspect ratios.
 - Server upload acceptance and multi-client sharing still require in-game validation.

@@ -38,7 +38,7 @@
 - [x] Chat image messages and per-message metadata
 - [x] Inline thumbnails and preview overlay
 - [x] Picker button and GIF / Photos / Stickers tabs
-- [x] Native local import and explicit item selection
+- [x] In-game local file browser and explicit item selection
 - [ ] Manual chat layout / hitbox tests at different GUI scales
 
 ## Stage 5 — GIF animation
@@ -56,7 +56,8 @@
 - [x] Responsive desktop and compact layouts
 - [x] Search, favorites, file preview and explicit action buttons
 - [x] Make panel scale setting affect the actual layout
-- [ ] Manual test at different GUI scales, aspect ratios, and OS file picker configurations
+- [x] Remove Java AWT native file dialog dependency; add in-game folder navigation and direct path entry
+- [ ] Manual test at different GUI scales, aspect ratios, and Windows/Linux filesystem permissions
 
 ## Stage 7 — Release hardening
 

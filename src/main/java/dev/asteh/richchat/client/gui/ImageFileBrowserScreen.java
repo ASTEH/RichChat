@@ -186,6 +186,32 @@ final class ImageFileBrowserScreen extends Screen {
                 return;
             }
             Path path = Path.of(value).toAbsolutePath().normalize();
+            if (Files.isRegularFile(path) && isSupportedImage(path)) {
+                Path directory = path.getParent();
+                if (directory == null) {
+                    setStatus(tr("richchat.file_browser.invalid_path"), true);
+                    return;
+                }
+                refreshDirectory(directory, true);
+                selectedFile = path;
+                int selectedIndex = -1;
+                for (int i = 0; i < entries.size(); i++) {
+                    if (entries.get(i).path().equals(path)) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+                if (selectedIndex >= 0) {
+                    int visibleRows = Math.max(1, listH / ROW_HEIGHT);
+                    if (selectedIndex < scrollOffset) {
+                        scrollOffset = selectedIndex;
+                    } else if (selectedIndex >= scrollOffset + visibleRows) {
+                        scrollOffset = selectedIndex - visibleRows + 1;
+                    }
+                }
+                setStatus(tr("richchat.file_browser.ready"), false);
+                return;
+            }
             refreshDirectory(path, true);
         } catch (InvalidPathException | SecurityException exception) {
             setStatus(message(exception, tr("richchat.file_browser.invalid_path")), true);

@@ -1,6 +1,6 @@
 package dev.asteh.richchat.client.gui;
 
-import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 import dev.asteh.richchat.client.ClientImageUploader;
 import dev.asteh.richchat.client.ImageTextureCache;
 import dev.asteh.richchat.client.storage.LocalImageLibrary;
@@ -366,9 +366,11 @@ public final class ImagePickerScreen extends Screen {
         graphics.drawString(font, tr("richchat.ui.library"), sidebarPanel.x + 8,
                 sidebarPanel.y + 9, ACCENT);
         for (int i = 0; i < 3; i++) {
-            int count = (int) allEntries.stream().filter(entry -> entry.category() == i).count();
-            String label = tr(categoryKey(i)) + "  " + count;
-            drawButton(graphics, categoryButtons[i], label, mouseX, mouseY, selectedCategory == i, false);
+            int category = i;
+            int count = (int) allEntries.stream().filter(entry -> entry.category() == category).count();
+            String label = tr(categoryKey(category)) + "  " + count;
+            drawButton(graphics, categoryButtons[category], label, mouseX, mouseY,
+                    selectedCategory == category, false);
         }
 
         Rect favoritesRect = new Rect(sidebarPanel.x + 7, sidebarPanel.y + 132,
@@ -556,7 +558,7 @@ public final class ImagePickerScreen extends Screen {
                 mouseX, mouseY, false, false, entry != null);
         drawButton(graphics, sendButton, uploading
                         ? tr("richchat.action.sending") : tr("richchat.action.send"),
-                mouseX, mouseY, entry != null && !uploading, true);
+                mouseX, mouseY, false, true, entry != null && !uploading);
         drawButton(graphics, closeButton, tr("gui.done"),
                 mouseX, mouseY, false, false);
     }
@@ -753,7 +755,7 @@ public final class ImagePickerScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (searchFocused) {
-            if (keyCode == InputConstants.KEY_BACKSPACE) {
+            if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
                 if (!searchText.isEmpty()) {
                     searchText = searchText.substring(0, searchText.length() - 1);
                     scrollOffset = 0;
@@ -761,7 +763,7 @@ public final class ImagePickerScreen extends Screen {
                 }
                 return true;
             }
-            if (keyCode == InputConstants.KEY_ESCAPE || keyCode == InputConstants.KEY_RETURN) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER) {
                 searchFocused = false;
                 return true;
             }

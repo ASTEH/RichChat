@@ -41,5 +41,22 @@
   "richchat.status.upload_queued": "Пакеты отправлены серверу: %1$s",
   "richchat.status.favorite_removed": "Удалено из избранного.",
   "richchat.status.favorite_added": "Добавлено в избранное.",
-  "richchat.status.deleted": "Удалено: %1$s"
+  "richchat.status.deleted": "Удалено: %1$s",
+  "richchat.file_browser.title": "Выбор изображения",
+  "richchat.file_browser.subtitle": "Открой папку и выбери PNG, JPG, JPEG или GIF",
+  "richchat.file_browser.path": "Путь к папке",
+  "richchat.file_browser.path_hint": "Введи путь к папке и нажми «Перейти»",
+  "richchat.file_browser.go": "Перейти",
+  "richchat.file_browser.no_file": "Файл не выбран",
+  "richchat.file_browser.selected": "Выбран: %1$s",
+  "richchat.file_browser.empty": "В этой папке нет изображений или подпапок.",
+  "richchat.file_browser.instructions": "Нажми на папку для перехода или на изображение для выбора.",
+  "richchat.file_browser.enter_path": "Сначала введи путь к папке.",
+  "richchat.file_browser.invalid_path": "Некорректный путь.",
+  "richchat.file_browser.not_directory": "Указанный путь не является папкой.",
+  "richchat.file_browser.access_denied": "Не удалось прочитать папку.",
+  "richchat.file_browser.list_truncated": "Показаны первые %1$s элементов. Уточни папку.",
+  "richchat.file_browser.folder_opened": "Элементов в папке: %1$s",
+  "richchat.file_browser.ready": "Файл выбран. Нажми «Выбрать файл».",
+  "richchat.file_browser.choose": "Выбрать файл"
 }

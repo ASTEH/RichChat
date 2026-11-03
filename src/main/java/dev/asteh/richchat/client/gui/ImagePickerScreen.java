@@ -98,7 +98,7 @@ public final class ImagePickerScreen extends Screen {
 
     private void calculateLayout() {
         double configuredScale = RichChatClientConfig.PANEL_SCALE.get();
-        double scale = Math.max(0.65D, Math.min(1.5D, configuredScale));
+        double scale = Math.max(0.5D, Math.min(2.0D, configuredScale));
         shellW = Math.min(Math.max(1, width - 16), (int) Math.round(BASE_WIDTH * scale));
         shellH = Math.min(Math.max(1, height - 16), (int) Math.round(BASE_HEIGHT * scale));
         shellX = (width - shellW) / 2;
@@ -391,8 +391,10 @@ public final class ImagePickerScreen extends Screen {
 
     private void drawLibrary(GuiGraphics graphics, int mouseX, int mouseY) {
         drawPanel(graphics, libraryPanel);
-        graphics.drawString(font, compactLayout ? tr("richchat.ui.library") : tr(categoryKey(selectedCategory)),
-                libraryPanel.x + 9, libraryPanel.y + 10, ACCENT);
+        if (!compactLayout) {
+            graphics.drawString(font, tr(categoryKey(selectedCategory)),
+                    libraryPanel.x + 9, libraryPanel.y + 10, ACCENT);
+        }
 
         if (compactLayout) {
             for (int i = 0; i < 3; i++) {

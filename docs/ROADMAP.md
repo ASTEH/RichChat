@@ -38,8 +38,8 @@
 - [x] Chat image messages and per-message metadata
 - [x] Inline thumbnails and preview overlay
 - [x] Picker button and GIF / Photos / Stickers tabs
-- [x] 4×5 grid, native import, and local deletion
-- [ ] Manual layout/hitbox tests at different GUI scales
+- [x] Native local import and explicit item selection
+- [ ] Manual chat layout / hitbox tests at different GUI scales
 
 ## Stage 5 — GIF animation
 
@@ -48,9 +48,17 @@
 - [x] Animate visible chat GIFs within configured concurrency limit
 - [x] Animate GIF in preview
 - [x] Bound decoded-frame memory and GPU texture cache
-- [ ] Manual test with transparent GIFs and restore-to-background/restore-to-previous disposal
+- [ ] Manual test with transparent GIFs and restore-to-background / restore-to-previous disposal
 
-## Stage 6 — Release hardening
+## Stage 6 — Modern media library UI
+
+- [x] Reuse Aftermath's charcoal / muted-green / amber visual language
+- [x] Responsive desktop and compact layouts
+- [x] Search, favorites, file preview and explicit action buttons
+- [x] Make panel scale setting affect the actual layout
+- [ ] Manual test at different GUI scales, aspect ratios, and OS file picker configurations
+
+## Stage 7 — Release hardening
 
 - [ ] Optional WebP ImageIO provider
 - [ ] Server upload memory budget and decoded-pixel budget

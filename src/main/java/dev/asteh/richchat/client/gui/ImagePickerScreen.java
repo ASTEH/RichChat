@@ -11,8 +11,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import java.awt.FileDialog;
-import java.awt.Frame;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -229,9 +227,11 @@ public final class ImagePickerScreen extends Screen {
     }
 
     private void addLocalImage() {
-        Path selected = chooseFile();
-        if (selected == null) return;
+        Minecraft.getInstance().setScreen(new ImageFileBrowserScreen(
+                this, this::importLocalImage));
+    }
 
+    void importLocalImage(Path selected) {
         try {
             LocalImageEntry imported = LocalImageLibrary.importImage(selected, selectedCategory);
             selectedCategory = imported.category();
@@ -245,27 +245,6 @@ public final class ImagePickerScreen extends Screen {
         } catch (IOException | RuntimeException exception) {
             status = message(exception, "Could not import image.");
             statusIsError = true;
-        }
-    }
-
-    private Path chooseFile() {
-        try {
-            FileDialog dialog = new FileDialog((Frame) null,
-                    tr("richchat.dialog.choose_file"), FileDialog.LOAD);
-            dialog.setFilenameFilter((directory, name) -> {
-                String lower = name.toLowerCase(Locale.ROOT);
-                return lower.endsWith(".png") || lower.endsWith(".jpg")
-                        || lower.endsWith(".jpeg") || lower.endsWith(".gif");
-            });
-            dialog.setVisible(true);
-            String file = dialog.getFile();
-            String directory = dialog.getDirectory();
-            dialog.dispose();
-            return file == null || directory == null ? null : Path.of(directory, file);
-        } catch (java.awt.HeadlessException exception) {
-            status = tr("richchat.status.file_dialog_unavailable");
-            statusIsError = true;
-            return null;
         }
     }
 

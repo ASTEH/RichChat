@@ -86,7 +86,7 @@ public abstract class ChatComponentMixin {
         );
     }
 
-    @Inject(method = "mouseClicked(DD)Z", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "handleChatQueueClicked(DD)Z", at = @At("HEAD"), cancellable = true)
     private void richchat$openPreview(double mouseX, double mouseY,
                                       CallbackInfoReturnable<Boolean> callback) {
         if (ChatImageRenderer.mouseClicked(mouseX, mouseY)) {
